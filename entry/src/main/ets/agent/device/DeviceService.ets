@@ -116,7 +116,6 @@ export class DeviceService {
   async initUITestClient(context?: common.Context): Promise<boolean> {
     // 如果已经有连接的客户端，检查是否需要重新连接
     if (this.uitestClient) {
-      // 检查 connId 是否改变（连接了不同的设备）
       const currentConnId = this.connId || '';
       const clientConnId = this.uitestClient.getConnId();
       
@@ -131,50 +130,13 @@ export class DeviceService {
     
     this.uitestClient = new UITestClient(this.connId, context);
     const connected = await this.uitestClient.connect();
+    
     if (connected) {
       // 获取屏幕尺寸
-      await this.fetchScreenSize();
+      await this.getScreenSize(true);
     }
+    
     return connected;
-  }
-
-  /**
-   * 获取屏幕尺寸（优先 TCP，失败回退 HDC）
-   */
-  private async fetchScreenSize(): Promise<void> {
-    // 方式1: 使用 UITest TCP 协议
-    if (this.uitestClient) {
-      try {
-        const sizeResult = await this.uitestClient.getDisplaySize();
-        if (sizeResult.success && sizeResult.width && sizeResult.height) {
-          this.screenWidth = sizeResult.width;
-          this.screenHeight = sizeResult.height;
-          console.info(`DeviceService: Screen ${this.screenWidth}x${this.screenHeight}`);
-          return;
-        }
-      } catch (error) {
-        // TCP 获取失败，尝试 HDC
-      }
-    }
-
-    // 方式2: 回退到 HDC 命令
-    try {
-      const result = HdcClient.shell("hidumper -s RenderService -a 'screen' | grep 'activeMode:'", this.connId);
-      if (result.success) {
-        // 解析格式: activeMode: 1260x2720, refreshRate=60
-        const match = result.output.match(/activeMode:\s*(\d+)x(\d+)/);
-        if (match) {
-          this.screenWidth = parseInt(match[1]);
-          this.screenHeight = parseInt(match[2]);
-          console.info(`DeviceService: Screen ${this.screenWidth}x${this.screenHeight} (HDC)`);
-          return;
-        }
-      }
-    } catch (error) {
-      // HDC 获取失败
-    }
-
-    console.warn(`DeviceService: Using default screen size ${this.screenWidth}x${this.screenHeight}`);
   }
 
   /**
@@ -197,15 +159,41 @@ export class DeviceService {
 
   /**
    * 获取屏幕尺寸
+   * @param forceRefresh 是否强制刷新（从设备重新获取）
    */
-  async getScreenSize(): Promise<ScreenSize> {
+  async getScreenSize(forceRefresh: boolean = false): Promise<ScreenSize> {
+    if (!forceRefresh) {
+      return { width: this.screenWidth, height: this.screenHeight };
+    }
+
+    // 方式1: 使用 UITest TCP 协议
     if (this.uitestClient) {
-      const result = await this.uitestClient.getDisplaySize();
-      if (result.success && result.width && result.height) {
-        this.screenWidth = result.width;
-        this.screenHeight = result.height;
+      try {
+        const sizeResult = await this.uitestClient.getDisplaySize();
+        if (sizeResult.success && sizeResult.width && sizeResult.height) {
+          this.screenWidth = sizeResult.width;
+          this.screenHeight = sizeResult.height;
+          return { width: this.screenWidth, height: this.screenHeight };
+        }
+      } catch (error) {
+        // TCP 获取失败，尝试 HDC
       }
     }
+
+    // 方式2: 回退到 HDC 命令
+    try {
+      const result = HdcClient.shell("hidumper -s RenderService -a 'screen' | grep 'activeMode:'", this.connId);
+      if (result.success) {
+        const match = result.output.match(/activeMode:\s*(\d+)x(\d+)/);
+        if (match) {
+          this.screenWidth = parseInt(match[1]);
+          this.screenHeight = parseInt(match[2]);
+        }
+      }
+    } catch (error) {
+      // HDC 获取失败，使用默认值
+    }
+
     return { width: this.screenWidth, height: this.screenHeight };
   }
 

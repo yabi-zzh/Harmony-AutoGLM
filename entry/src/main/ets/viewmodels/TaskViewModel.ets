@@ -110,6 +110,7 @@ export class TaskViewModel {
     if (!config.apiKey || config.apiKey.trim() === '') {
       this.configError = '请先配置 API 密钥';
       this.isConfigured = false;
+      this.isInitializing = false;  // 确保退出初始化状态
       return;
     }
 
