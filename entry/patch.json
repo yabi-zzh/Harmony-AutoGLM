@@ -1,0 +1,11 @@
+{
+  "app": {
+    "bundleName": "io.github.yabizzh.autoglm",
+    "patchVersionCode": 2000012,
+    "versionCode": 1000000
+  },
+  "module": {
+    "name": "entry",
+    "type": "hotreload"
+  }
+}

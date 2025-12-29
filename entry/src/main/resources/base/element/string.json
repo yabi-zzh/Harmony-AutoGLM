@@ -1,0 +1,32 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Next AI Agent"
+    },
+    {
+      "name": "internet_permission_reason",
+      "value": "用于连接远程设备进行HDC通信"
+    },
+    {
+      "name": "network_info_permission_reason",
+      "value": "用于获取网络状态信息"
+    },
+    {
+      "name": "background_permission_reason",
+      "value": "用于在后台持续运行AI代理服务"
+    },
+    {
+      "name": "wifi_info_permission_reason",
+      "value": "用于获取本机WiFi IP地址以判断是否为本机设备"
+    }
+  ]
+}
